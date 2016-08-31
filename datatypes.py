@@ -15,17 +15,22 @@ class Image(object):
     self._features = None
 
   @property
+  def image_path(self):
+    return self._image_path
+
+  @property
   def frame(self):
     if self._frame is None:
       frame = cv2.imread(self._image_path)
-      self._frame = denoise.denoise_colored(frame)
+      self._frame = frame
     return self._frame
 
   @property
   def gray_frame(self):
     if self._gray_frame is None:
       gray_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-      self._gray_frame = gray_frame
+      self._gray_frame = self._frame = denoise.denoise_gray(gray_frame)
+
     return self._gray_frame
 
   @property

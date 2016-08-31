@@ -6,5 +6,5 @@ def denoise_colored(frame):
   return dst
 
 def denoise_gray(frame):
-  dst = cv2.fastNlMeansDenoising(frame, h=1)
+  dst = cv2.fastNlMeansDenoising(frame, h=0.8)
   return dst
