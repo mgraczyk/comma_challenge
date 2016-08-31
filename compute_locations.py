@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 import cv2
+import numpy as np
+from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 import image_data
 import correspondence
@@ -17,11 +20,17 @@ def compute_locations(scene):
   # 4. Relative locations of each for frame for a single car at a time.
   # 5. Relative locations of each car in each.
 
-  correspondence.estimate_poses(scene)
-  # for agent in scene.agents:
-    # for i in range(len(agent.images) - 1):
-      # correspondence.compute_fundamental(
-          # agent.images[i], agent.images[i + 1], agent.fgmask, agent.fgmask)
+  X = correspondence.estimate_poses(scene)
+
+  len_a = len(scene.agents)
+  points = np.reshape(X.T, (3, len_a, -1))
+  fig = plt.figure()
+  ax = fig.add_subplot(111, projection='3d')
+
+  for a in range(len_a):
+    ax.plot(points[0, a, :], points[1, a, :], points[2, a, :])
+    ax.scatter(points[0, a, :], points[1, a, :], points[2, a, :])
+  plt.show()
 
 def main(image_dir):
   scene = image_data.load_scene(image_dir)

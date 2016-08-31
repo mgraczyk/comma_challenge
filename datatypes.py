@@ -18,9 +18,7 @@ class Image(object):
   def frame(self):
     if self._frame is None:
       frame = cv2.imread(self._image_path)
-      # TODO(mgraczyk): XXX Add denoising back
-      # self._frame = denoise.denoise_colored(frame)
-      self._frame = frame
+      self._frame = denoise.denoise_colored(frame)
     return self._frame
 
   @property
