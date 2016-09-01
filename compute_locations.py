@@ -75,6 +75,15 @@ def main():
   #    http://users.cecs.anu.edu.au/~hartley/Papers/cheiral/revision/cheiral.pdf
   # 7. Positions and orientations which minimize the square error in the
   #    estimated camera poses across all pairs measured.
+  #
+  # Areas for improvement:
+  #   - Very little of the many parameters throughout the code have been tuned.
+  #   - The camera focal length could be estimated from images or determined
+  #     more accurately based on the model of the camera used.
+  #   - The entire pose estimation process could b iterated with refined
+  #     estimates of the positions of features in object space. Currently the
+  #     positions of a large number of features are readily computable, but their
+  #     locations are not used in order to keep the algorithm fast and simple.
   args = get_arg_parser().parse_args()
 
   scene = image_data.load_scene(args.input_dir)
