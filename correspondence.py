@@ -217,12 +217,6 @@ def estimate_poses(scene):
 
   # Array of (R, t)
   results = pool.map(do_pose_work, pos_params)
-  with open('results.pickle', 'wb') as results_f:
-    pickle.dump(results, results_f)
-
-  # with open('results.pickle', 'rb') as results_f:
-    # results = pickle.load(results_f)
-
   positions = _compute_ls_position_estimate(pos_params, results, lens_i)
 
   # Zero the orientation so that it points in along the average path of travel
