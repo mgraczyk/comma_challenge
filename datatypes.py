@@ -67,6 +67,10 @@ class Agent(object):
     self._K[1, 1] = self._K[0, 0]
 
   @property
+  def name(self):
+    return self._name
+
+  @property
   def images(self):
     return self._images
 

@@ -51,12 +51,13 @@ def _rot_from_vector(to_vec):
   """Get a rotation matrix that sends (1, 0, 0) to the direction of to_vec."""
   # Adapted from
   # http://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
-  to_vec_dir  = a0_avg / np.linalg.norm(a0_avg)
+  to_vec_dir  = to_vec / np.linalg.norm(to_vec)
   v = np.asarray([0, -to_vec_dir[2], to_vec_dir[1]])
   c = to_vec_dir[0]
   s = np.linalg.norm(v)
   vss = np.asarray([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
   P0 = np.eye(3) + vss + np.dot(vss, vss) * (1 - c) / s**2
+  return P0
 
 def _compute_ls_position_estimate(pos_params, results, lens_i):
   # Assume that agent 0, frame 0 has position [0, 0, 0] and build matrices
@@ -193,10 +194,10 @@ def estimate_poses(scene):
         for a1 in range(len_a) for a2 in range(a1+1, len_a)),
       # Between agents at adjacent frames.
       itertools.chain.from_iterable(
-        ((a1, a2, i1, i2, 0.3) for i1, i2 in zip(range(lens_i[a1] - 1), range(1, lens_i[a2])))
+        ((a1, a2, i1, i2, 0.4) for i1, i2 in zip(range(lens_i[a1] - 1), range(1, lens_i[a2])))
         for a1 in range(len_a) for a2 in range(a1+1, len_a)),
       itertools.chain.from_iterable(
-        ((a1, a2, i1, i2, 0.3) for i1, i2 in zip(range(1, lens_i[a1]), range(lens_i[a2] - 1)))
+        ((a1, a2, i1, i2, 0.4) for i1, i2 in zip(range(1, lens_i[a1]), range(lens_i[a2] - 1)))
         for a1 in range(len_a) for a2 in range(a1+1, len_a))
       ))
 

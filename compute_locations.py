@@ -1,12 +1,11 @@
 #!/usr/bin/env python
+import argparse
 import cv2
-import numpy as np
 import json
-from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 import image_data
 import correspondence
+import plotting
 
 def compute_locations(scene):
   """ Computes the locations and orientations of a set of moving objects from
@@ -15,29 +14,6 @@ def compute_locations(scene):
 
   positions, orientations = correspondence.estimate_poses(scene)
   return positions, orientations
-
-def plot_positions_orientations(scene, positions, orientations):
-  # Assumes each agent has the same number of frames
-  num_frames = positions.shape[1]
-  len_a = len(scene.agents)
-  points = np.reshape(positions, (3, len_a, -1))
-  arrows = np.zeros((3, positions.shape[1]))
-
-  unit_arrow = np.array([1, 0, 0]).T
-  for i in range(num_frames):
-    R = orientations[:, :, i]
-    arrows[:, i] = np.dot(R, unit_arrow)
-
-  fig = plt.figure()
-  ax = fig.add_subplot(111, projection='3d')
-  for a in range(len_a):
-    ax.plot(points[0, a, :], points[1, a, :], points[2, a, :], linestyle='--')
-    ax.scatter(points[0, a, :], points[1, a, :], points[2, a, :])
-  ax.quiver(positions[0, :], positions[1, :], positions[2, :],
-            arrows[0, :], arrows[1, :], arrows[2, :],
-            length=0.1, arrow_length_ratio=0)
-
-  plt.show()
 
 def write_results(scene, positions, orientations, results_file):
   image_paths = list(image.image_path
@@ -53,28 +29,63 @@ def write_results(scene, positions, orientations, results_file):
 
   json.dump(results, results_file)
 
-def main(image_dir):
+def get_arg_parser():
+    parser = argparse.ArgumentParser(
+        description='Computes locations and orientations for a collection of images.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    output_help = """
+    Path of json file where results will be written.
+    The output json structure is
+    {
+      "frames": {
+        "./pics/0_0.jpg": {
+          "orientation": [ [ 1.0, 0.0, 0.0 ],
+                           [ 0.0, 1.0, 0.0 ],
+                           [ 0.0, 0.0, 1.0 ] ],
+          "position": [ 0.0, 0.0, 0.0 ]
+        },
+        ...
+      }
+    }
+    """
+
+    parser.add_argument('input_dir', metavar='input-dir', nargs='?', default='./pics',
+                        help="Path of directory where input images are located.")
+    parser.add_argument('-o', '--output-json', dest="output_json", default='./results.json',
+                        help=output_help)
+    parser.add_argument('--show-plot', dest='show_plot', action='store_true', default=True,
+                        help="Show position and orientation plot")
+    parser.add_argument('--no-show-plot', dest='show_plot', action='store_false',
+                        help="Show position and orientation plot")
+
+    return parser
+
+def main():
   # In order to compute the agent locations, we perform a series of steps to
   # gather information about the scene. We compute the following:
+  #
   # 1. Denoised version of the grayscale of each image.
   # 2. Nonmoving image foregrounds, so we know which pixels to ignore.
   # 3. SIFT features for each image.
   # 4. Correspondences between features in certain pairs of images using
   #    Fast Library for Approximate Nearest Neighbors (FLANN), specifically with
   #    the KD Tree indexing algorithm.
-  # 4. Relative locations of each for frame for a single car at a time.
-  # 5. Relative locations of each car in each.
+  # 5. Essential matrices between pairs of images using RANSAC.
+  # 6. Camera pose using cheirality check with cv::recoverPose. See
+  #    http://users.cecs.anu.edu.au/~hartley/Papers/cheiral/revision/cheiral.pdf
+  # 7. Positions and orientations which minimize the square error in the
+  #    estimated camera poses across all pairs measured.
+  args = get_arg_parser().parse_args()
 
-  scene = image_data.load_scene(image_dir)
+  scene = image_data.load_scene(args.input_dir)
   positions, orientations = compute_locations(scene)
 
-  # TODO(mgraczyk): Dump results to json.
-  results_path = "results.json"
-  with open(results_path, "w") as results_file:
+  with open(args.output_json, "w") as results_file:
     write_results(scene, positions, orientations, results_file)
-    print("Wrote results to {}".format(results_path))
+    print("Wrote results to {}".format(args.output_json))
 
-  plot_positions_orientations(scene, positions, orientations)
+  if args.show_plot:
+    plotting.plot_positions_orientations(scene, positions, orientations)
 
 if __name__ == "__main__":
-  main('./pics')
+  main()
